@@ -1,20 +1,15 @@
-import storage
+import storage.cache
 import storage.device
-import storage.recovery
-import storage.sd_salt
-from storage import cache
-from trezor import config, sdcard, ui, utils, wire, workflow
-from trezor.messages import Capability, MessageType
-from trezor.messages.Features import Features
-from trezor.messages.PreauthorizedRequest import PreauthorizedRequest
-from trezor.messages.Success import Success
 
-from apps.common import mnemonic, safety_checks
-from apps.common.request_pin import verify_user_pin
+from trezor import config, utils, wire, workflow
+from trezor.messages import MessageType
+from trezor.messages.Success import Success
 
 if False:
     import protobuf
     from typing import Iterable, NoReturn, Optional, Protocol
+    from trezor.messages.Features import Features
+    from trezor.messages.PreauthorizedRequest import PreauthorizedRequest
     from trezor.messages.Initialize import Initialize
     from trezor.messages.EndSession import EndSession
     from trezor.messages.GetFeatures import GetFeatures
@@ -35,6 +30,15 @@ if False:
 
 
 def get_features() -> Features:
+    import storage.recovery
+    import storage.sd_salt
+
+    from trezor import sdcard
+    from trezor.messages import Capability
+    from trezor.messages.Features import Features
+
+    from apps.common import mnemonic, safety_checks
+
     f = Features(
         vendor="trezor.io",
         language="en-US",
@@ -49,6 +53,7 @@ def get_features() -> Features:
         unlocked=config.is_unlocked(),
         passphrase_protection=storage.device.is_passphrase_enabled(),
     )
+    #f.language = "times %s, alloc %d, free %d, frag %f" % (timings, gc.mem_alloc(), gc.mem_free(), gc.mem_frag())
 
     if utils.BITCOIN_ONLY:
         f.capabilities = [
@@ -105,7 +110,7 @@ async def handle_Initialize(ctx: wire.Context, msg: Initialize) -> Features:
     features = get_features()
     if msg.session_id:
         msg.session_id = bytes(msg.session_id)
-    features.session_id = cache.start_session(msg.session_id)
+    features.session_id = storage.cache.start_session(msg.session_id)
     return features
 
 
@@ -123,7 +128,7 @@ async def handle_LockDevice(ctx: wire.Context, msg: LockDevice) -> Success:
 
 
 async def handle_EndSession(ctx: wire.Context, msg: EndSession) -> Success:
-    cache.end_current_session()
+    storage.cache.end_current_session()
     return Success()
 
 
@@ -141,6 +146,8 @@ async def handle_Ping(ctx: wire.Context, msg: Ping) -> Success:
 async def handle_DoPreauthorized(
     ctx: wire.Context, msg: DoPreauthorized
 ) -> protobuf.MessageType:
+    from trezor.messages.PreauthorizedRequest import PreauthorizedRequest
+
     authorization: Authorization = storage.cache.get(
         storage.cache.APP_BASE_AUTHORIZATION
     )
@@ -192,6 +199,8 @@ ALLOW_WHILE_LOCKED = (
 
 
 def set_homescreen() -> None:
+    import storage.recovery
+
     if not config.is_unlocked():
         from apps.homescreen.lockscreen import lockscreen
 
@@ -227,6 +236,8 @@ async def unlock_device(ctx: wire.GenericContext = wire.DUMMY_CONTEXT) -> None:
     If the storage is locked, attempt to unlock it. Reset the homescreen and the wire
     handler.
     """
+    from apps.common.request_pin import verify_user_pin
+
     if not config.is_unlocked():
         # verify_user_pin will raise if the PIN was invalid
         await verify_user_pin(ctx)

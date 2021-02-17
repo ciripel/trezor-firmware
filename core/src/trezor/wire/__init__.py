@@ -311,6 +311,8 @@ async def handle_session(
     res_msg: Optional[protobuf.MessageType] = None
     req_type = None
     req_msg = None
+
+    modules = utils.unimport_begin()
     while True:
         try:
             if next_msg is None:
@@ -346,7 +348,8 @@ async def handle_session(
 
             # Take a mark of modules that are imported at this point, so we can
             # roll back and un-import any others.  Should not raise.
-            modules = utils.unimport_begin()
+            if not use_workflow:
+                modules = utils.unimport_begin()
 
             # We need to find a handler for this message type.  Should not
             # raise.

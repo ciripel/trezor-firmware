@@ -1,12 +1,17 @@
 # isort:skip_file
 
+from trezor import loop, utils, wire, workflow
+
+unimport_manager = utils.unimport()
+
 # unlock the device
-import boot  # noqa: F401
+with unimport_manager:
+    import boot
+
+    del boot
 
 # prepare the USB interfaces, but do not connect to the host yet
 import usb
-
-from trezor import loop, utils, wire, workflow
 
 # start the USB
 usb.bus.open()
@@ -15,45 +20,23 @@ usb.bus.open()
 def _boot_apps() -> None:
     # load applications
     import apps.base
-    import apps.management
-    import apps.bitcoin
-    import apps.misc
+
+    apps.base.boot()
 
     if not utils.BITCOIN_ONLY:
-        import apps.ethereum
-        import apps.lisk
-        import apps.monero
-        import apps.nem
-        import apps.stellar
-        import apps.ripple
-        import apps.cardano
-        import apps.tezos
-        import apps.eos
-        import apps.binance
         import apps.webauthn
+
+        apps.webauthn.boot()
 
     if __debug__:
         import apps.debug
 
-    # boot applications
-    apps.base.boot()
-    apps.management.boot()
-    apps.bitcoin.boot()
-    apps.misc.boot()
-    if not utils.BITCOIN_ONLY:
-        apps.ethereum.boot()
-        apps.lisk.boot()
-        apps.monero.boot()
-        apps.nem.boot()
-        apps.stellar.boot()
-        apps.ripple.boot()
-        apps.cardano.boot()
-        apps.tezos.boot()
-        apps.eos.boot()
-        apps.binance.boot()
-        apps.webauthn.boot()
-    if __debug__:
         apps.debug.boot()
+
+    with unimport_manager:
+        import register_messages
+
+        del register_messages
 
     # run main event loop and specify which screen is the default
     apps.base.set_homescreen()
