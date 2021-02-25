@@ -87,6 +87,8 @@ if __debug__:
         await ctx.write(DebugLinkLayout(lines=content))
 
     async def touch_hold(x: int, y: int, duration_ms: int) -> None:
+        from trezor import io
+
         await loop.sleep(duration_ms)
         loop.synthetic_events.append((io.TOUCH, (io.TOUCH_END, x, y)))
 

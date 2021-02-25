@@ -63,6 +63,12 @@ def unimport_end(mods: Set[str], collect: bool = True) -> None:
     if collect:
         gc.collect()
 
+
+def mem_dump(filename: str) -> None:
+    print("### dumping to", filename)
+    print("### sysmodules:")
+    for mod in sorted(sys.modules):
+       print("*", mod)
     print(
         "### mem_alloc: {}, mem_free: {}, mem_frag: {}".format(
             gc.mem_alloc(),
@@ -80,10 +86,12 @@ class unimport:
         self.mods = unimport_begin()
 
     def __exit__(self, _exc_type: Any, _exc_value: Any, _tb: Any) -> None:
+        assert self.mods is not None
         unimport_end(self.mods, collect=False)
         self.mods.clear()
         self.mods = None
         gc.collect()
+        mem_dump("unimport.json")
 
 
 def ensure(cond: bool, msg: str = None) -> None:

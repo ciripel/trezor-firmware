@@ -1,56 +1,26 @@
 # isort:skip_file
+import storage
+import storage.device
+# Import always-active modules
+from trezor import config, loop, pin, utils, wire, workflow
 
-from trezor import loop, utils, wire, workflow
+# Prepare the USB interfaces first. Do not connect to the host yet.
+import usb
+#from trezor import pin, utils
 
 unimport_manager = utils.unimport()
 
-# unlock the device
+# unlock the device, unload the boot module afterwards
 with unimport_manager:
     import boot
 
     del boot
 
-# prepare the USB interfaces, but do not connect to the host yet
-import usb
-
 # start the USB
-usb.bus.open()
+usb.bus.open(storage.device.get_device_id())
 
-
-def _boot_apps() -> None:
-    # load applications
-    import apps.base
-
-    apps.base.boot()
-
-    if not utils.BITCOIN_ONLY:
-        import apps.webauthn
-
-        apps.webauthn.boot()
-
-    if __debug__:
-        import apps.debug
-
-        apps.debug.boot()
-
+while True:
     with unimport_manager:
-        import register_messages
+        import session
 
-        del register_messages
-
-    # run main event loop and specify which screen is the default
-    apps.base.set_homescreen()
-    workflow.start_default()
-
-
-_boot_apps()
-
-# initialize the wire codec
-wire.setup(usb.iface_wire)
-if __debug__:
-    wire.setup(usb.iface_debug, use_workflow=False)
-
-loop.run()
-
-# loop is empty. That should not happen
-utils.halt("All tasks have died.")
+        del session

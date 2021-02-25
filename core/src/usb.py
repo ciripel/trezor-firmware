@@ -1,4 +1,3 @@
-from storage.device import get_device_id
 from trezor import io, utils
 
 _iface_iter = iter(range(5))
@@ -93,7 +92,6 @@ bus = io.USB(
     manufacturer="SatoshiLabs",
     product="TREZOR",
     interface="TREZOR Interface",
-    serial_number=get_device_id(),
     usb21_landing=False,
 )
 bus.add(iface_wire)

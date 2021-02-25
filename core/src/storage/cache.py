@@ -151,7 +151,7 @@ if False:
     from typing import Awaitable, Callable, TypeVar
 
     ByteFunc = TypeVar("ByteFunc", bound=Callable[..., bytes])
-    AsyncByteFunc = TypeVar("AsyncByteFunc", bound=Awaitable[bytes])
+    AsyncByteFunc = TypeVar("AsyncByteFunc", bound=Callable[..., Awaitable[bytes]])
 
 
 def stored(key: int) -> Callable[[ByteFunc], ByteFunc]:

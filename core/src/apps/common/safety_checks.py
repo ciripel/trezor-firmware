@@ -15,7 +15,7 @@ def read_setting() -> EnumTypeSafetyCheckLevel:
     """
     temporary_safety_check_level = storage.cache.get(APP_COMMON_SAFETY_CHECKS_TEMPORARY)
     if temporary_safety_check_level:
-        return int.from_bytes(temporary_safety_check_level, "big")
+        return int.from_bytes(temporary_safety_check_level, "big")  # type: ignore
     else:
         stored = storage.device.safety_check_level()
         if stored == SAFETY_CHECK_LEVEL_STRICT:
