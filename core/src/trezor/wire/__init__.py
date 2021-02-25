@@ -87,9 +87,9 @@ def register(wire_type: int, handler: Handler) -> None:
     workflow_handlers[wire_type] = handler
 
 
-def setup(iface: WireInterface, use_workflow: bool = True) -> None:
+def setup(iface: WireInterface, is_debug_session: bool = False) -> None:
     """Initialize the wire stack on passed USB interface."""
-    loop.schedule(handle_session(iface, codec_v1.SESSION_ID, use_workflow))
+    loop.schedule(handle_session(iface, codec_v1.SESSION_ID, is_debug_session))
 
 
 def clear() -> None:
@@ -154,12 +154,16 @@ DUMMY_CONTEXT = DummyContext()
 
 PROTOBUF_BUFFER_SIZE = 8192
 
+WIRE_BUFFER = bytearray(PROTOBUF_BUFFER_SIZE)
+if __debug__:
+    WIRE_BUFFER_DEBUG = bytearray(PROTOBUF_BUFFER_SIZE)
+
 
 class Context:
-    def __init__(self, iface: WireInterface, sid: int) -> None:
+    def __init__(self, iface: WireInterface, sid: int, buffer: bytearray) -> None:
         self.iface = iface
         self.sid = sid
-        self.buffer = bytearray(PROTOBUF_BUFFER_SIZE)
+        self.buffer = buffer
         self.buffer_reader = utils.BufferReader(self.buffer)
         self.buffer_writer = utils.BufferWriter(self.buffer)
 
@@ -304,9 +308,13 @@ class UnexpectedMessageError(Exception):
 
 
 async def handle_session(
-    iface: WireInterface, session_id: int, use_workflow: bool = True
+    iface: WireInterface, session_id: int, is_debug_session: bool = True
 ) -> None:
-    ctx = Context(iface, session_id)
+    if __debug__ and is_debug_session:
+        ctx_buffer = WIRE_BUFFER_DEBUG
+    else:
+        ctx_buffer = WIRE_BUFFER
+    ctx = Context(iface, session_id, ctx_buffer)
     next_msg: Optional[codec_v1.Message] = None
     res_msg: Optional[protobuf.MessageType] = None
     req_type = None
@@ -348,7 +356,7 @@ async def handle_session(
 
             # Take a mark of modules that are imported at this point, so we can
             # roll back and un-import any others.  Should not raise.
-            if not use_workflow:
+            if is_debug_session:
                 modules = utils.unimport_begin()
 
             # We need to find a handler for this message type.  Should not
@@ -387,7 +395,7 @@ async def handle_session(
                     # communication inside, but it should eventually return a
                     # response message, or raise an exception (a rather common
                     # thing to do).  Exceptions are handled in the code below.
-                    if use_workflow:
+                    if not is_debug_session:
                         res_msg = await workflow.spawn(wf_task)
                     else:
                         res_msg = await wf_task
@@ -448,6 +456,10 @@ async def handle_session(
 
             # Unload modules imported by the workflow.  Should not raise.
             utils.unimport_end(modules)
+
+            if not is_debug_session and next_msg is None and msg_type != 0:
+                loop.clear()
+                return
 
         except Exception as exc:
             # The session handling should never exit, just log and continue.
