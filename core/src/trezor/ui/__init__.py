@@ -34,9 +34,9 @@ _alert_in_progress = False
 
 # in debug mode, display an indicator in top right corner
 if __debug__:
-    from apps.debug import screenshot
-
     def refresh() -> None:
+        from apps.debug import screenshot
+
         if not screenshot():
             display.bar(Display.WIDTH - 8, 0, 8, 8, 0xF800)
         display.refresh()

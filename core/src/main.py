@@ -5,7 +5,7 @@ if __debug__:
     import storage.debug
 
 # Import always-active modules
-from trezor import config, loop, pin, utils, wire, workflow
+from trezor import config, pin, utils
 
 # Prepare the USB interfaces first. Do not connect to the host yet.
 import usb
@@ -27,3 +27,6 @@ while True:
         import session
 
         del session
+
+    print("reboot")
+    #utils.mem_dump("reboot.json")

@@ -1,8 +1,5 @@
 from trezor import loop, ui
 
-if __debug__:
-    from apps.debug import confirm_signal
-
 if False:
     from typing import List, Tuple, Optional
 
@@ -42,4 +39,6 @@ class ConfirmBase(ui.Layout):
             return self.content.read_content()
 
         def create_tasks(self) -> Tuple[loop.Task, ...]:
+            from apps.debug import confirm_signal
+
             return super().create_tasks() + (confirm_signal(),)

@@ -293,3 +293,5 @@ def boot() -> None:
     wire.register(MessageType.CancelAuthorization, handle_CancelAuthorization)
 
     reload_settings_from_storage()
+    if not config.is_unlocked():
+        wire.find_handler = get_pinlocked_handler

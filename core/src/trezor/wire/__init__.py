@@ -93,6 +93,7 @@ def setup(iface: WireInterface, is_debug_session: bool = False) -> None:
 
 
 def clear() -> None:
+    raise RuntimeError
     """Remove all registered handlers."""
     workflow_handlers.clear()
     workflow_packages.clear()
@@ -308,7 +309,7 @@ class UnexpectedMessageError(Exception):
 
 
 async def handle_session(
-    iface: WireInterface, session_id: int, is_debug_session: bool = True
+    iface: WireInterface, session_id: int, is_debug_session: bool = False
 ) -> None:
     if __debug__ and is_debug_session:
         ctx_buffer = WIRE_BUFFER_DEBUG
@@ -457,7 +458,7 @@ async def handle_session(
             # Unload modules imported by the workflow.  Should not raise.
             utils.unimport_end(modules)
 
-            if not is_debug_session and next_msg is None and msg_type != 0:
+            if not is_debug_session and next_msg is None:  # and msg_type != 0:
                 loop.clear()
                 return
 
@@ -501,6 +502,8 @@ def failure(exc: BaseException) -> Failure:
         return Failure(code=exc.code, message=exc.message)
     elif isinstance(exc, loop.TaskClosed):
         return Failure(code=FailureType.ActionCancelled, message="Cancelled")
+    elif exc.__class__.__name__ == "InvalidSession":
+        return Failure(code=FailureType.InvalidSession, message="Invalid session")
     else:
         return Failure(code=FailureType.FirmwareError, message="Firmware error")
 

@@ -1,4 +1,4 @@
-from trezor import utils, wire
+from trezor import utils
 from trezor.crypto import random
 
 
@@ -16,6 +16,9 @@ APP_BASE_AUTHORIZATION = 3
 APP_COMMON_SEED_WITHOUT_PASSPHRASE = 0 | _SESSIONLESS_FLAG
 APP_COMMON_SAFETY_CHECKS_TEMPORARY = 1 | _SESSIONLESS_FLAG
 
+
+class InvalidSession(Exception):
+    pass
 
 class DataCache:
     data: list[bytearray]
@@ -49,8 +52,8 @@ class SessionCache(DataCache):
     def __init__(self) -> None:
         self.session_id = bytearray(_SESSION_ID_LENGTH)
         self.data = [
-            bytearray(256),  # APP_COMMON_SEED
-            bytearray(128),  # APP_CARDANO_ROOT
+            bytearray(64),  # APP_COMMON_SEED
+            bytearray(64),  # APP_CARDANO_ROOT
             bytearray(1),  # APP_MONERO_LIVE_REFRESH
             bytearray(128),  # APP_BASE_AUTHORIZATION
         ]
@@ -69,7 +72,7 @@ class SessionCache(DataCache):
 class SessionlessCache(DataCache):
     def __init__(self) -> None:
         self.data = [
-            bytearray(128),  # APP_COMMON_SEED_WITHOUT_PASSPHRASE
+            bytearray(64),  # APP_COMMON_SEED_WITHOUT_PASSPHRASE
             bytearray(1),  # APP_COMMON_SAFETY_CHECKS_TEMPORARY
         ]
         super().__init__()
@@ -134,7 +137,7 @@ def set(key: int, value: bytes) -> None:
         _SESSIONLESS_CACHE.set(key ^ _SESSIONLESS_FLAG, value)
         return
     if _active_session_idx is None:
-        raise wire.InvalidSession
+        raise InvalidSession
     _SESSIONS[_active_session_idx].set(key, value)
 
 
@@ -142,7 +145,7 @@ def get(key: int) -> bytes:
     if key & _SESSIONLESS_FLAG:
         return _SESSIONLESS_CACHE.get(key ^ _SESSIONLESS_FLAG)
     if _active_session_idx is None:
-        raise wire.InvalidSession
+        raise InvalidSession
     return _SESSIONS[_active_session_idx].get(key)
 
 
@@ -163,7 +166,7 @@ def stored(key: int) -> Callable[[ByteFunc], ByteFunc]:
 
         def wrapper(*args, **kwargs):  # type: ignore
             value = get(key)
-            if value is None:
+            if not value:
                 value = func(*args, **kwargs)
                 set(key, value)
             return value
@@ -182,7 +185,7 @@ def stored_async(key: int) -> Callable[[AsyncByteFunc], AsyncByteFunc]:
 
         async def wrapper(*args, **kwargs):  # type: ignore
             value = get(key)
-            if value is None:
+            if not value:
                 value = await func(*args, **kwargs)
                 set(key, value)
             return value

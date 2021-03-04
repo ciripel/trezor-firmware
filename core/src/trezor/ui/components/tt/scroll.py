@@ -6,9 +6,6 @@ from .button import Button, ButtonCancel, ButtonConfirm, ButtonDefault
 from .confirm import CANCELLED, CONFIRMED
 from .swipe import SWIPE_DOWN, SWIPE_UP, SWIPE_VERTICAL, Swipe
 
-if __debug__:
-    from apps.debug import confirm_signal, swipe_signal, notify_layout_change
-
 if False:
     from typing import List, Tuple
 
@@ -81,6 +78,8 @@ class Paginated(ui.Layout):
             directions = SWIPE_VERTICAL
 
         if __debug__:
+            from apps.debug import swipe_signal
+
             swipe = await loop.race(Swipe(directions), swipe_signal())
         else:
             swipe = await Swipe(directions)
@@ -94,6 +93,8 @@ class Paginated(ui.Layout):
         self.repaint = True
 
         if __debug__:
+            from apps.debug import notify_layout_change
+
             notify_layout_change(self)
 
         self.on_change()
@@ -110,6 +111,8 @@ class Paginated(ui.Layout):
             # shut down by a DebugLink confirm, even if used outside of a confirm() call
             # But we don't have any such usages in the codebase, and it doesn't actually
             # make much sense to use a Paginated without a way to confirm it.
+            from apps.debug import confirm_signal
+
             return tasks + (confirm_signal(),)
         else:
             return tasks
@@ -230,4 +233,6 @@ class PaginatedWithButtons(ui.Layout):
             return self.pages[self.page].read_content()
 
         def create_tasks(self) -> Tuple[loop.Task, ...]:
+            from apps.debug import confirm_signal
+
             return super().create_tasks() + (confirm_signal(),)

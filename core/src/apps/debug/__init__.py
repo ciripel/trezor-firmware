@@ -92,10 +92,13 @@ if __debug__:
     ) -> Success:
         from trezor import ui
 
+        should_watch_changes = bool(msg.watch)
+
+        if should_watch_changes:
+            await ui.wait_until_layout_is_running()
         layout_change_chan.putters.clear()
-        await ui.wait_until_layout_is_running()
-        storage.watch_layout_changes = bool(msg.watch)
-        log.debug(__name__, "Watch layout changes: {}".format(storage.watch_layout_changes))
+        storage.watch_layout_changes = should_watch_changes
+        log.debug(__name__, "Watch layout changes: {}".format(should_watch_changes))
         return Success()
 
     async def dispatch_DebugLinkDecision(
