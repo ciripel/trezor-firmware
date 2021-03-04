@@ -4,6 +4,8 @@ if not __debug__:
     halt("debug mode inactive")
 
 if __debug__:
+    from storage import debug as storage
+
     from trezor import config, log, loop, utils, wire
     from trezor.ui import display
     from trezor.messages import MessageType
@@ -22,10 +24,6 @@ if __debug__:
         from trezor.messages.DebugLinkEraseSdCard import DebugLinkEraseSdCard
         from trezor.messages.DebugLinkWatchLayout import DebugLinkWatchLayout
 
-    save_screen = False
-    save_screen_directory = "."
-
-    reset_internal_entropy: Optional[bytes] = None
     reset_current_words = loop.chan()
     reset_word_index = loop.chan()
 
@@ -39,20 +37,17 @@ if __debug__:
     debuglink_decision_chan = loop.chan()
 
     layout_change_chan = loop.chan()
-    current_content: List[str] = []
-    watch_layout_changes = False
 
     def screenshot() -> bool:
-        if save_screen:
-            display.save(save_screen_directory + "/refresh-")
+        if storage.save_screen:
+            display.save(storage.save_screen_directory + "/refresh-")
             return True
         return False
 
     def notify_layout_change(layout: Layout) -> None:
-        global current_content
-        current_content = layout.read_content()
-        if watch_layout_changes:
-            layout_change_chan.publish(current_content)
+        storage.current_content = layout.read_content()
+        if storage.watch_layout_changes:
+            layout_change_chan.publish(storage.current_content)
 
     async def dispatch_debuglink_decision(msg: DebugLinkDecision) -> None:
         from trezor.messages import DebugSwipeDirection
@@ -95,10 +90,12 @@ if __debug__:
     async def dispatch_DebugLinkWatchLayout(
         ctx: wire.Context, msg: DebugLinkWatchLayout
     ) -> Success:
-        global watch_layout_changes
+        from trezor import ui
+
         layout_change_chan.putters.clear()
-        watch_layout_changes = bool(msg.watch)
-        log.debug(__name__, "Watch layout changes: {}".format(watch_layout_changes))
+        await ui.wait_until_layout_is_running()
+        storage.watch_layout_changes = bool(msg.watch)
+        log.debug(__name__, "Watch layout changes: {}".format(storage.watch_layout_changes))
         return Success()
 
     async def dispatch_DebugLinkDecision(
@@ -133,14 +130,14 @@ if __debug__:
         m.mnemonic_secret = mnemonic.get_secret()
         m.mnemonic_type = mnemonic.get_type()
         m.passphrase_protection = passphrase.is_enabled()
-        m.reset_entropy = reset_internal_entropy
+        m.reset_entropy = storage.reset_internal_entropy
 
         if msg.wait_layout:
-            if not watch_layout_changes:
+            if not storage.watch_layout_changes:
                 raise wire.ProcessError("Layout is not watched")
             m.layout_lines = await layout_change_chan.take()
         else:
-            m.layout_lines = current_content
+            m.layout_lines = storage.current_content
 
         if msg.wait_word_pos:
             m.reset_word_pos = await reset_word_index.take()
@@ -151,14 +148,11 @@ if __debug__:
     async def dispatch_DebugLinkRecordScreen(
         ctx: wire.Context, msg: DebugLinkRecordScreen
     ) -> Success:
-        global save_screen_directory
-        global save_screen
-
         if msg.target_directory:
-            save_screen_directory = msg.target_directory
-            save_screen = True
+            storage.save_screen_directory = msg.target_directory
+            storage.save_screen = True
         else:
-            save_screen = False
+            storage.save_screen = False
             display.clear_save()  # clear C buffers
 
         return Success()

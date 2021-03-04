@@ -1,6 +1,9 @@
 # isort:skip_file
 import storage
 import storage.device
+if __debug__:
+    import storage.debug
+
 # Import always-active modules
 from trezor import config, loop, pin, utils, wire, workflow
 
