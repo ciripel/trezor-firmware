@@ -8,7 +8,6 @@ if False:
         Any,
         Callable,
         Iterable,
-        Tuple,
         TypeVar,
         Union,
     )
@@ -196,7 +195,7 @@ if False:
         type[UnicodeType],
         type[MessageType],
     ]
-    FieldDef = Tuple[str, MessageTypeDef, Any]
+    FieldDef = tuple[str, MessageTypeDef, Any]
     FieldDict = dict[int, FieldDef]
 
     FieldCache = dict[type[MessageType], FieldDict]

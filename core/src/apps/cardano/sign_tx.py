@@ -64,7 +64,7 @@ from .layout import (
 from .seed import is_byron_path, is_shelley_path
 
 if False:
-    from typing import Any, Union, Tuple
+    from typing import Any, Union
 
     from trezor.messages.CardanoSignTx import CardanoSignTx
     from trezor.messages.CardanoTxCertificateType import CardanoTxCertificateType
@@ -77,7 +77,7 @@ if False:
     from apps.common.paths import PathSchema
 
     CborizedTokenBundle = dict[bytes, dict[bytes, int]]
-    CborizedTxOutput = Tuple[bytes, Union[int, tuple[int, CborizedTokenBundle]]]
+    CborizedTxOutput = tuple[bytes, Union[int, tuple[int, CborizedTokenBundle]]]
 
 
 METADATA_HASH_SIZE = 32
