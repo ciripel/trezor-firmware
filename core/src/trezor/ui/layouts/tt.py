@@ -24,7 +24,7 @@ from ..constants.tt import (
 from .common import interact
 
 if False:
-    from typing import Any, Iterator, List, Sequence, Union, Optional
+    from typing import Any, Iterator, Sequence
 
     from trezor import wire
     from trezor.messages.ButtonRequest import EnumTypeButtonRequestType
@@ -60,9 +60,9 @@ def confirm_action(
     br_type: str,
     title: str,
     action: str,
-    description: Optional[str] = None,
-    verb: Union[str, bytes] = Confirm.DEFAULT_CONFIRM,
-    icon: Optional[str] = None,
+    description: str | None = None,
+    verb: str | bytes = Confirm.DEFAULT_CONFIRM,
+    icon: str | None = None,
     br_code: EnumTypeButtonRequestType = ButtonRequestType.Other,
     **kwargs: Any,
 ) -> LayoutType:
@@ -175,7 +175,7 @@ def _hex_lines(hex_data: str, lines: int = TEXT_MAX_LINES) -> Iterator[str]:
 def _show_address(
     address: str,
     desc: str,
-    network: Optional[str] = None,
+    network: str | None = None,
 ) -> Confirm:
     text = Text(desc, ui.ICON_RECEIVE, ui.GREEN)
     if network is not None:
@@ -186,7 +186,7 @@ def _show_address(
 
 
 def _show_xpub(xpub: str, desc: str, cancel: str) -> Paginated:
-    pages: List[ui.Component] = []
+    pages: list[ui.Component] = []
     for lines in chunks(list(chunks(xpub, 16)), 5):
         text = Text(desc, ui.ICON_RECEIVE, ui.GREEN)
         text.mono(*lines)
@@ -214,10 +214,10 @@ def show_xpub(
 async def show_address(
     ctx: wire.GenericContext,
     address: str,
-    address_qr: Optional[str] = None,
+    address_qr: str | None = None,
     desc: str = "Confirm address",
-    network: Optional[str] = None,
-    multisig_index: Optional[int] = None,
+    network: str | None = None,
+    multisig_index: int | None = None,
     xpubs: Sequence[str] = [],
 ) -> None:
     is_multisig = len(xpubs) > 0
@@ -278,7 +278,7 @@ def show_warning(
     ctx: wire.GenericContext,
     br_type: str,
     content: str,
-    subheader: Optional[str] = None,
+    subheader: str | None = None,
     button: str = "Try again",
 ) -> LayoutType:
     text = Text("Warning", ui.ICON_WRONG, ui.RED, new_lines=False)
@@ -299,7 +299,7 @@ def show_success(
     ctx: wire.GenericContext,
     br_type: str,
     content: str,
-    subheader: Optional[str] = None,
+    subheader: str | None = None,
     button: str = "Continue",
 ) -> LayoutType:
     text = Text("Success", ui.ICON_CONFIRM, ui.GREEN, new_lines=False)
@@ -387,7 +387,7 @@ def confirm_metadata(
     br_type: str,
     title: str,
     content: str,
-    param: Optional[str] = None,
+    param: str | None = None,
     br_code: EnumTypeButtonRequestType = ButtonRequestType.SignTx,
 ) -> LayoutType:
     text = Text(title, ui.ICON_SEND, ui.GREEN, new_lines=False)

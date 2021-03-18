@@ -9,9 +9,6 @@ from .swipe import SWIPE_DOWN, SWIPE_UP, SWIPE_VERTICAL, Swipe
 if __debug__:
     from apps.debug import confirm_signal, swipe_signal, notify_layout_change
 
-if False:
-    from typing import List, Tuple
-
 
 def render_scrollbar(pages: int, page: int) -> None:
     BBOX = const(220)
@@ -50,7 +47,7 @@ def render_swipe_text() -> None:
 
 class Paginated(ui.Layout):
     def __init__(
-        self, pages: List[ui.Component], page: int = 0, one_by_one: bool = False
+        self, pages: list[ui.Component], page: int = 0, one_by_one: bool = False
     ):
         super().__init__()
         self.pages = pages
@@ -98,8 +95,8 @@ class Paginated(ui.Layout):
 
         self.on_change()
 
-    def create_tasks(self) -> Tuple[loop.Task, ...]:
-        tasks: Tuple[loop.Task, ...] = (
+    def create_tasks(self) -> tuple[loop.Task, ...]:
+        tasks: tuple[loop.Task, ...] = (
             self.handle_input(),
             self.handle_rendering(),
             self.handle_paging(),
@@ -120,7 +117,7 @@ class Paginated(ui.Layout):
 
     if __debug__:
 
-        def read_content(self) -> List[str]:
+        def read_content(self) -> list[str]:
             return self.pages[self.page].read_content()
 
 
@@ -182,13 +179,13 @@ class PageWithButtons(ui.Component):
 
     if __debug__:
 
-        def read_content(self) -> List[str]:
+        def read_content(self) -> list[str]:
             return self.content.read_content()
 
 
 class PaginatedWithButtons(ui.Layout):
     def __init__(
-        self, pages: List[ui.Component], page: int = 0, one_by_one: bool = False
+        self, pages: list[ui.Component], page: int = 0, one_by_one: bool = False
     ) -> None:
         super().__init__()
         self.pages = [
@@ -226,8 +223,8 @@ class PaginatedWithButtons(ui.Layout):
 
     if __debug__:
 
-        def read_content(self) -> List[str]:
+        def read_content(self) -> list[str]:
             return self.pages[self.page].read_content()
 
-        def create_tasks(self) -> Tuple[loop.Task, ...]:
+        def create_tasks(self) -> tuple[loop.Task, ...]:
             return super().create_tasks() + (confirm_signal(),)

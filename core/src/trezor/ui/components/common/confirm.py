@@ -3,9 +3,6 @@ from trezor import loop, ui
 if __debug__:
     from apps.debug import confirm_signal
 
-if False:
-    from typing import List, Tuple, Optional
-
 CONFIRMED = object()
 CANCELLED = object()
 INFO = object()
@@ -15,8 +12,8 @@ class ConfirmBase(ui.Layout):
     def __init__(
         self,
         content: ui.Component,
-        confirm: Optional[ui.Component] = None,
-        cancel: Optional[ui.Component] = None,
+        confirm: ui.Component | None = None,
+        cancel: ui.Component | None = None,
     ) -> None:
         self.content = content
         self.confirm = confirm
@@ -38,8 +35,8 @@ class ConfirmBase(ui.Layout):
 
     if __debug__:
 
-        def read_content(self) -> List[str]:
+        def read_content(self) -> list[str]:
             return self.content.read_content()
 
-        def create_tasks(self) -> Tuple[loop.Task, ...]:
+        def create_tasks(self) -> tuple[loop.Task, ...]:
             return super().create_tasks() + (confirm_signal(),)

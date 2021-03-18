@@ -13,7 +13,7 @@ from apps.common import HARDENED
 from apps.common.confirm import confirm
 
 if False:
-    from typing import Iterable, Iterator, List, Union
+    from typing import Iterable, Iterator
     from trezor import wire
 
 
@@ -64,7 +64,7 @@ def paginate_text(
     header_icon: str = ui.ICON_DEFAULT,
     icon_color: int = ui.ORANGE_ICON,
     break_words: bool = False,
-) -> Union[Text, Paginated]:
+) -> Text | Paginated:
     span = Span(text, 0, font, break_words=break_words)
     if span.count_lines() <= TEXT_MAX_LINES:
         result = Text(
@@ -77,7 +77,7 @@ def paginate_text(
         return result
 
     else:
-        pages: List[ui.Component] = []
+        pages: list[ui.Component] = []
         span.reset(text, 0, font, break_words=break_words, line_width=204)
         while span.has_more_content():
             # advance to first line of the page
